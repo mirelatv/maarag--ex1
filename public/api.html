@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Ordered movies vod</title> 
+	</head>	
+	<body>
+		<header>
+			<h1>Ordered movies vod API:</h1>
+		</header>
+		<main>
+			<p>
+				<h4>Method: GET /getAllOrderedMovies</h4>
+				<p>
+					<h6>Parameter: None</h6>
+					<h6>return Json list of all ordered movies grouped by ordered day</h6>
+					<p>Exemple</p>
+					<img src="/assets/images/allmovies.png">
+				</p>
+			</p>
+			<p>
+				<h4>Method:POST /getOrederedMovie</h4>
+				<p>
+					<h6>Parameter: movieName (string)</h6>
+					<h6>return Json with requested movie</h6>
+					<h6>Errors: If movie name not exists</h6>
+					<h6>Add header Content-Type: application/json</h6>
+					<p>Exemple</p>
+					<img src="/assets/images/getOrederedMovie.png">
+				</p>
+			</p>
+			<p>
+				<h4>Method: GET /getOrderedMoviesByIdsRange/start_id/end_id</h4>
+				<p>
+					<h6>Parameter: start id (number), end id (number)</h6>
+					<h6>return Json with requested id range</h6>
+					<h6>Errors: If ids not exists, if ids argument illigal</h6>
+					<p>Exemple</p>
+					<img src="/assets/images/getOrderedMoviesByIdsRange.png">
+				</p>
+			</p>
+		</main>
+	</body>
+</html>

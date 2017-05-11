@@ -1,15 +1,12 @@
-const EventEmitter = require('events'),
-        moment = require('moment'),
+const   moment = require('moment'),
         db = require('./data/db.js').moviesDB;
 
 //console.log(moviesList);
 
 
-exports.OrderedMoviesModule = class OrderedMoviesModule extends EventEmitter {
+exports.OrderedMoviesModule = class OrderedMoviesModule {
 
     constructor() {
-       super();
-       //console.log(now);
        this.movies = db.movies;
        this.orderedDays = db.orderedDays;
     }
