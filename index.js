@@ -3,7 +3,36 @@ const express = require('express'),
       app = new express(),
       path = require('path'),   
       port = process.env.PORT || 8080,
+	  // consts = require('./consts'),
+	  // mongoose = require('mongoose'),
+	  // Movie = require('./movie'),
+	  // Promise = require("bluebird"),
       moviesModule = require('./OrderedMovies.js').OrderedMoviesModule;
+
+// mongoose.connect(consts.MLAB_KEY);
+
+// const conn = mongoose.connection;
+// conn.on('error', (err) => {
+//     console.log(`connection error: ${err}`);
+// });
+
+// conn.once('open',
+//             () => {
+//                 console.log('start2');
+//                 var promise = Movie.find({}, 
+//                     (err, movie) => {
+//                         if(err) console.log(`query error: ${err}`);
+//                     console.log(movie);
+                
+//                     mongoose.disconnect();
+                
+//                     });
+//                 promise.then((data) => {
+//                 	console.log(data);
+//                 });
+
+//                 console.log('connected');
+//             });
 
 app.use('/assets', express.static(path.join(__dirname, 'public')));
 
@@ -16,9 +45,15 @@ function errorMsg(msg){
   return {"ErrorMsg": msg};
 }
 
+
 app.get('/', (req,res) => {
     res.sendFile(path.join(__dirname + '/public/api.html'));
 });
+
+app.get('/test', (req,res) => {
+	mm.test(req, res);	
+});
+
 
 app.get('/getAllOrderedMovies', function(req,res){
     var movies = mm.getAllOrderedMovies();    

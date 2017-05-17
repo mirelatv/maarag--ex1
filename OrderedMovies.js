@@ -1,14 +1,44 @@
 const   moment = require('moment'),
-        db = require('./data/db.js').moviesDB;
+        ///db = require('./data/db.js').moviesDB,
+        consts = require('./consts'),
+        mongoose = require('mongoose'),
+        Promise = require("bluebird"),
+        Movie = require('./movie'),
+        OrderDay = require('./orderDay');
 
-//console.log(moviesList);
+mongoose.connect(consts.MLAB_KEY);
+
+const conn = mongoose.connection;
+conn.on('error', (err) => {
+    console.log(`connection error: ${err}`);
+});
 
 
 exports.OrderedMoviesModule = class OrderedMoviesModule {
 
     constructor() {
-       this.movies = db.movies;
-       this.orderedDays = db.orderedDays;
+        // this.conn = mongoose.connection;
+
+        // conn.on('error', (err) => {
+        //     console.log(`connection error: ${err}`);
+        // });
+
+        this.movies = [];
+        this.orderedDays = [];
+       // this.movies = db.movies;
+       // this.orderedDays = db.orderedDays;
+    }
+
+    test(req, res){
+        console.log('test');
+        var promise = Movie.find({}, 
+                    (err, movie) => {
+                        if(err) console.log(`query error: ${err}`);                
+                        mongoose.disconnect();
+                    });
+        promise.then((data) => {
+            res.json(data);
+        });
     }
 
     getAllOrderedMovies(){
