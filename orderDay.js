@@ -1,8 +1,11 @@
 var mongoose = require('mongoose'),
     schema = mongoose.Schema,
     orderDaySchema = new schema({
-        date: {type:Date, index:1, required:true, unique:true},
-        movies: [Number]
+        date: {type:String, index:1, required:true, unique:true},
+        movies: [{
+            id: Number,
+            name: String
+        }]
 
     }, {collection: 'orderedDays'});
 

@@ -1,9 +1,6 @@
 const   moment = require('moment'),
-        ///db = require('./data/db.js').moviesDB,
         consts = require('./consts'),
         mongoose = require('mongoose'),
-        Promise = require("bluebird"),
-        Movie = require('./movie'),
         OrderDay = require('./orderDay');
 
 mongoose.connect(consts.MLAB_KEY);
@@ -17,123 +14,105 @@ conn.on('error', (err) => {
 exports.OrderedMoviesModule = class OrderedMoviesModule {
 
     constructor() {
-        // this.conn = mongoose.connection;
 
-        // conn.on('error', (err) => {
-        //     console.log(`connection error: ${err}`);
-        // });
-
-        this.movies = [];
-        this.orderedDays = [];
-       // this.movies = db.movies;
-       // this.orderedDays = db.orderedDays;
     }
 
-    test(req, res){
-        console.log('test');
-        var promise = Movie.find({}, 
-                    (err, movie) => {
-                        if(err) console.log(`query error: ${err}`);                
-                        mongoose.disconnect();
-                    });
-        promise.then((data) => {
-            res.json(data);
-        });
-    }
-
-    getAllOrderedMovies(){
+    getAllOrderedMovies(req, res){
         this.printLog('getAllOrderedMovies');
+
         var results = [];
-        for(var d in this.orderedDays){
-            var day = this.orderedDays[d];
+        var dayPromise = OrderDay.find({}, 
+            (err, days) => {
+                if(err) this.sendJsonError(res, "Somthig went wrong - no data found");
+                //Create json to client without mongo id
+                for(var d in days){
+                    var day = days[d];
+
+                    var result = this.createDayObject(day);
+                    results.push(result);
+                }
+                res.json(results)
+            });
+    }
+
+    createDayObject(rawData){
+        var day = {};
+        day.date = rawData.date;
+        day.movies = rawData.movies;
+
+        return day;
+    }
+
+    getOrderedMovieByName(req, res, name){
+        this.printLog('getOrderedMovieByName', `name: ${name}`);
+        var promise = OrderDay.find({'movies': {$elemMatch: {"name": name }}}, 
+            (err, days) => {
+                if(err) console.log(err);
+                //Create json for client
+                if(days.length > 0){
+                    var result = this.createSeacrhMovie(days, name);
+                    res.json(result);
+                }
+                else{
+                    this.sendJsonError(res, `${name} not found`);
+                }
+            });    
+    }
+
+    createSeacrhMovie(days, searchName){
+        var results = [];
+
+        for(var d in days){
+            var day = days[d];
 
             var result = {};
-            result.day = day.date;
-            result.movies = [];
+            result.date = day.date;
 
-            for(var m in this.movies){
-                for(var om in day.movies){
-                    if(day.movies[om] == this.movies[m].id)
-                        result.movies.push(this.movies[m]);
+            for(var m in day.movies){
+                var movie = day.movies[m];
+                if(movie.name == searchName){
+                    result.movie = movie;
+                    break;
                 }
             }
 
             results.push(result);
-        }
-
-        return results
-    }
-
-    getOrderedMovieByName(name){
-        this.printLog('getOrderedMovieByName', name);
-        return this.findOrderedMovieByName(name);
-    }
-
-
-    findOrderedMovieByName(name){
-        var foundMovie = null;
-
-        for(var i in this.movies){
-            if(this.movies[i].name == name){
-                foundMovie = this.movies[i];
-                break;
-            }
-        }
-        if(foundMovie == null)
-            return new Error(`Movie name ${name} not found`);
-
-        var result = {};
-        for(var d in this.orderedDays){
-            var orderedDay = this.orderedDays[d];
-            var moviesForDay = orderedDay.movies;
-
-            for(var om in moviesForDay){
-                if(moviesForDay[om] == foundMovie.id)
-                    result.date = orderedDay.date;
-            }
-        }
-
-        result.movie = foundMovie;
-        return result;
-    }
-
-    getOrderedMoviesByIds(start, end){
-        this.printLog('getOrderedMoviesByIds', `start: ${start}, end: ${end}`);
-
-        var lastId = this.movies[this.movies.length - 1].id;
-        var firstId = this.movies[0].id;
-        if(start > end){
-            console.log('Invalid params');
-            return new Error(`Invalid params (min id: ${firstId}, max id: ${lastId}), start id must be bigger then end id`);
-        }
-        if(start < firstId || start > lastId || end < firstId || end > lastId ){
-            console.log('Invalid params');
-            return new Error(`Invalid params (min id: ${firstId}, max id: ${lastId})`);
-        }
-
-        var foundsMovies = [];
-        for(var i in this.movies){
-            var movie = this.movies[i];
-            if(movie.id >= start && movie.id <= end){
-                foundsMovies.push(movie.name);
-            }
-        }
-
-        if(foundsMovies.length == 0){
-            return new Error(``);
-        }
-
-        var results = [];
-
-        for(var i in foundsMovies){
-            var fullData = this.findOrderedMovieByName(foundsMovies[i]);
-
-            results.push(fullData);
-        }
+        }   
 
         return results;
     }
 
+    getOrderedMoviesByDateAndName(req, res, date, movieName){
+        this.printLog('getOrderedMoviesByDateAndName', `date: ${date}, movieName: ${movieName}`);
+
+        var validFormat = this.assertDateFormat(date);
+        if(!validFormat){
+            this.sendJsonError(res, `Unvalidated date format for ${date} - the requested format is YYYY-MM-DD`);
+            return;
+        }
+        var promise = OrderDay.find({'date': date}, 
+            (err, days) => {
+                if(err) console.log(err);
+                //Create json for client
+                if(days.length > 0){
+                    var result = this.createSeacrhMovie(days, movieName);
+                    res.json(result);
+                }
+                else{
+                    this.sendJsonError(res, `${date} not found`);
+                }
+            });
+    }
+
+    assertDateFormat(date){
+        return /\d\d\d\d-\d\d-\d\d$/.test(date);
+    }
+
+    sendJsonError(res, error){
+        var jsonError = {};
+        jsonError.error = error;
+        res.json(jsonError);
+    }
 
     printLog(funcName, params = null){
         var now = moment().format('YYYY-MM-DD HH:mm');
